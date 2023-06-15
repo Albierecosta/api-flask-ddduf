@@ -72,6 +72,10 @@ uf_por_codigo = {
     49: "SC"
 }
 
+@app.route("/")
+def home():
+    return "Bem-vindo à API de conversão de códigos de estado!"
+
 @app.route("/<conve>")
 def ok(conve):
     converte = int(conve)
