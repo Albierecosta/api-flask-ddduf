@@ -20,9 +20,12 @@ class DatabaseConnection:
     def insert_api_keys(self, api_keys):
         with self.app.app_context():
             for key in api_keys:
-                api_key = ApiKey(key=key)
-                db.session.add(api_key)
+                existing_key = ApiKey.query.filter_by(key=key).first()
+                if not existing_key:
+                    api_key = ApiKey(key=key)
+                    db.session.add(api_key)
             db.session.commit()
+
 
     def verify_api_key(self, key):
         with self.app.app_context():
