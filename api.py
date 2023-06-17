@@ -1,5 +1,19 @@
-import os
 from flask import Flask, request, jsonify
+from database import DatabaseConnection
+import hashlib
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:*******@localhost:5433/api_keys'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db_conn = DatabaseConnection(app)
+db_conn.init_app()
+
+db_conn.create_api_key_table()
+
+api_key = "testee" ## TODO implementar metodo de cadastro automatico
+hashed_key = hashlib.sha1(api_key.encode()).hexdigest()
+db_conn.insert_api_keys([hashed_key])
 
 app = Flask(__name__)
 
@@ -78,9 +92,14 @@ def home():
 
 @app.route("/<conve>")
 def ok(conve):
-    converte = int(conve)
-    estado = uf_por_codigo.get(converte, "NENHUMA UF ENCONTRADA")
-    return jsonify({"Estado": estado})
+    api_key = request.headers.get("API-Key")
+
+    if db_conn.verify_api_key(api_key):
+        converte = int(conve)
+        estado = uf_por_codigo.get(converte, "NENHUMA UF ENCONTRADA")
+        return jsonify({"Estado": estado})
+    else:
+        return jsonify({"error": "Chave de API inválida."}), 401
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=2000, debug=False)
